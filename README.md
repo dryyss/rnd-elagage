@@ -79,9 +79,17 @@ L'upload de photos (`/api/admin/upload`) redimensionne en 1600 px max et convert
 
 ## Hébergement
 
-Le contenu est stocké **sur le disque** (`content/*.json`, `public/uploads/`). Il faut donc un hébergement avec **système de fichiers persistant** et runtime Node : VPS, Railway, Render, Fly.io, Docker, o2switch Node, etc.
+Deux modes de stockage du contenu modifiable (JSON + photos), choisis automatiquement par `src/lib/content.ts` et `src/app/api/admin/upload/route.ts` :
 
-Sur une plateforme serverless (Vercel, Netlify), les écritures ne persistent pas : remplacer `readJson`/`writeJson` dans `src/lib/content.ts` par un stockage externe (Vercel KV, Blob, Supabase, base SQL) et l'upload par un bucket (S3, Blob). Le reste du code ne change pas.
+- **Disque** (`content/*.json`, `public/uploads/`) quand `BLOB_READ_WRITE_TOKEN` est absent : dev local, VPS, Railway, Render, Docker… Il faut un système de fichiers persistant et un runtime Node.
+- **Vercel Blob** quand `BLOB_READ_WRITE_TOKEN` est défini : c'est le mode utilisé sur Vercel, où le disque est en lecture seule. Chaque sauvegarde écrit une nouvelle version `content/<clé>/<horodatage>.json` (les 5 dernières sont conservées) ; les photos vont dans `uploads/`. Les JSON du dépôt servent de contenu initial tant qu'une clé n'a jamais été modifiée.
+
+### Déploiement Vercel (démo actuelle)
+
+- Projet : `rnd-elagage` (compte `dryyss`), production sur **https://rnd-elagage.vercel.app**. Store Blob `rnd-elagage-content` (public, région `cdg1`), fonctions en `cdg1` (`vercel.json`).
+- Variables : `ADMIN_PASSWORD`, `ADMIN_SECRET` (sensible), `BLOB_READ_WRITE_TOKEN` (injecté par le store). `RESEND_API_KEY` n'est pas défini : les demandes de devis sont seulement journalisées dans les logs Vercel.
+- Le projet n'est **pas connecté à GitHub** : un `git push` ne déploie rien. Pour publier : `npx vercel@latest deploy --prod` depuis le dossier (CLI récente ; la 33 installée globalement ne connaît pas `blob`).
+- Pour l'admin en local, ne pas laisser `BLOB_READ_WRITE_TOKEN` dans `.env.local` (`vercel link`/`env pull` l'y ajoutent) : sinon l'admin local écrit dans le store de production.
 
 ## Avant la mise en ligne — à compléter avec le client
 

@@ -2,7 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Les JSON de `content/` sont lus à l'exécution (admin, revalidation) : on les
+  // embarque explicitement dans les fonctions serverless (Vercel).
+  outputFileTracingIncludes: {
+    "/*": ["./content/**/*"],
+  },
   images: {
+    // Photos envoyées depuis l'admin quand le stockage est Vercel Blob.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
     formats: ["image/avif", "image/webp"],
     // Les photos changent rarement : 31 jours de cache pour les variantes optimisées.
     minimumCacheTTL: 2678400,
