@@ -82,6 +82,14 @@
     outline-offset: 3px;
     border-radius: 2px;
   }
+  /* Tout bloc de <main> après le premier (hero) n'est mis en page et peint qu'à
+     l'approche du viewport. Mesuré sur l'accueil mobile : layout initial 210 → 90 ms
+     réels (×4 sur mobile lent), TBT Lighthouse divisé par 3 à 8. Le hero garde un
+     rendu immédiat. `auto` mémorise la taille réelle une fois le bloc rendu. */
+  main > :nth-child(n + 2) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 640px;
+  }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;

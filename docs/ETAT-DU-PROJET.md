@@ -1,6 +1,6 @@
 # État du projet — reprise
 
-Dernière session : 1er octobre 2026. Ce document permet de reprendre le travail sans relire l'historique.
+Dernière session : 1er octobre 2026 (reprise, après-midi). Ce document permet de reprendre le travail sans relire l'historique.
 
 ## 1. Où on en est
 
@@ -11,7 +11,7 @@ Dernière session : 1er octobre 2026. Ce document permet de reprendre le travail
 | Admin `/admin` (planning, réalisations, tarifs, avis, coordonnées, upload) | Terminé, flux login → sauvegarde → revalidation testé |
 | SEO (metadata, JSON-LD, sitemap, robots, OG) | Terminé |
 | Build, lint, TypeScript | Propres (`npm run build` OK, 43 pages) |
-| **Performance** | **En cours** — voir §3 |
+| **Performance** | **Objectif local atteint** (mobile 93–96 sur 4 pages testées) — voir §3 ; reste à confirmer sur PageSpeed Insights une fois le site hébergé |
 | Acquisition (SEO/GEO/Ads/tunnel) | Plan rédigé dans `docs/ACQUISITION.md`, rien d'implémenté côté tracking |
 
 ## 2. Lancer le projet
@@ -29,14 +29,55 @@ Admin : `/admin/login`. Contenu éditable dans `content/*.json`. Détails dans `
 
 ### Mesures (Lighthouse 12, build de production, `next start`)
 
-| Page | Mobile avant | Mobile après | Desktop |
-| --- | --- | --- | --- |
-| Accueil | Perf 74 · LCP 4,8 s · TBT 250 ms | Perf 82–85 · LCP ~3,8 s · TBT 140–210 ms | **Perf 100** · LCP 0,7 s |
-| Prestation | — | Perf 79 · LCP 3,8 s | — |
-| Zone | — | Perf 69–80 (bruit) · LCP 3,3 s | — |
-| Contact | — | Perf 81 · LCP 4,3 s | — |
+| Page | Mobile, 1ʳᵉ session (CLI headless, biaisé — voir ci-dessous) | Mobile, mesure fiable avant `content-visibility` | Mobile, mesure fiable après | Desktop |
+| --- | --- | --- | --- | --- |
+| Accueil | Perf 74 → 82–85 | Perf 81–94 (bruit TBT) · LCP 3,0 s · SI 1,8–2,4 s · TBT 130–535 ms | **Perf 93–95** · LCP 2,8–3,2 s · SI 1,1–1,8 s · TBT 54–75 ms | **Perf 100** |
+| Prestation | Perf 79 | — | **Perf 85–95** · LCP 2,9–3,6 s · TBT 74–248 ms | — |
+| Zone | Perf 69–80 | — | **Perf 95–96** · LCP 2,7–2,8 s · TBT 91–113 ms | — |
+| Contact | Perf 81 | — | **Perf 93–96** · LCP 2,6–3,1 s · TBT 109–125 ms | — |
 
-A11y 96–100, Best Practices 100, SEO 100 partout. CLS = 0.
+A11y 96–100, Best Practices 100, SEO 100 partout. CLS = 0. Chaque cellule « après » = 2 ou 3 passages, le bruit entre passages reste de ±5 points (surtout le TBT).
+
+### Session du 1er octobre (reprise) : le diagnostic était faux, voici le bon
+
+**L'écart de 2,3 s entre `load` et la première peinture n'existe pas.** C'était un artefact de `lighthouse` CLI lancé via `chrome-launcher` en `--headless=new` sur cette machine : une page HTML triviale ne le montre pas, mais le site oui, et seulement dans cette configuration. Vérifications faites :
+
+- Chrome normal (onglet) : FCP 824 ms à froid, 176 ms à chaud, pour un `load` à 446 / 143 ms.
+- Lighthouse CLI **sans** `--headless=new` : FCP observé 1 099 ms pour `load` 780 ms.
+- Lighthouse 12 lancé **par l'API Node avec une page puppeteer** (même Chrome, même émulation mobile) : FCP observé 300–800 ms. Le LCP simulé passe de 4,2 s à 3,0 s avec le même build.
+
+Conséquence : le LCP simulé (Lantern) utilise le LCP *observé* comme borne pour décider quelles requêtes « précèdent » le LCP. Un FCP observé artificiellement tardif faisait rentrer tout le JS et les images dans le graphe du LCP, d'où les 4,2 s. Les hypothèses 1 à 3 de la session précédente (`.grain`, `backdrop-blur`, polices) visaient donc un fantôme : testées proprement, elles ne changent rien au layout (différence < 15 ms, dans le bruit).
+
+**Ce qui coûtait vraiment** (trace non throttlée, émulation mobile) : le layout initial de la page d'accueil durait **≈ 210 ms réels** pour 1 071 objets, soit ≈ 850 ms sur un mobile lent (×4), avant la première peinture. Bissection par injection CSS dans la feuille de style (3 passages par variante, médiane) :
+
+| Variante | Layout initial (médiane) |
+| --- | --- |
+| Contrôle | 210 ms |
+| Polices web → Arial | 117 ms (coût DirectWrite/shaping, en partie spécifique à Windows) |
+| Hero seul, reste masqué (179 objets) | 93 ms |
+| `.grain` masqué · SVG masqués · images masquées · `text-wrap` retiré · `letter-spacing` retiré | 185–211 ms (aucun effet) |
+
+**Correctif appliqué** (`globals.css`, `@layer base`) :
+
+```css
+main > :nth-child(n + 2) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+```
+
+Toutes les pages ont la même structure plate `main > hero + sections` ; le premier bloc (hero) reste rendu immédiatement, les suivants ne sont mis en page qu'à l'approche du viewport. Effet mesuré : layout initial 210 → ≈ 90 ms, TBT divisé par 3 à 8, Speed Index divisé par ~2, FCP observé plus tôt. Vérifié : pas de rognage visible (le confinement de peinture clippe les débordements, les sections ont assez de padding), les 33 `.reveal` de l'accueil s'animent bien au défilement, aucun `position: fixed/sticky` à l'intérieur des sections (le confinement en ferait le bloc conteneur — à garder en tête si on en ajoute un).
+
+**Ce qui reste et pourquoi on s'arrête là :** le LCP simulé plafonne à 2,7–3,2 s. Test par blocage de ressources : sans aucun JS, LCP 2,26 s (perf 98) ; sans images ou sans polices, aucun changement. C'est donc le poids du JS dans le modèle réseau slow-4G de Lighthouse : socle React + routeur Next ≈ 103 Ko gz (incompressible côté app), JS propre aux pages ≈ 15 Ko (Header, cookies, planning, calculateur, `next/image`). Il n'y a plus de levier significatif sans changer de framework. À confirmer sur PageSpeed Insights quand le site sera hébergé (HTTP/2 + TLS + vrai TTFB changent la simulation).
+
+### Comment mesurer sans se faire piéger
+
+Ne pas utiliser `npx lighthouse --chrome-flags="--headless=new"` sur cette machine (biais de ~2 s sur la première peinture). Deux options :
+
+1. CLI avec fenêtre visible : `npx lighthouse@12 http://localhost:3300/ --output=json --output-path=lh.json --chrome-flags="--no-sandbox" --quiet --only-categories=performance` (`$env:CHROME_PATH` pointant sur Chrome). TBT bruité par la fenêtre.
+2. API Node avec puppeteer (méthode utilisée pour les chiffres ci-dessus) : `lighthouse(url, { onlyCategories: ['performance'] }, undefined, page)` avec une page issue de `puppeteer.launch({ headless: true, executablePath })`. Les modules sont dans le cache npx (`%LOCALAPPDATA%\npm-cache\_npx\<hash>\node_modules\{lighthouse,puppeteer-core}`). Faire 2–3 passages, le TBT varie de ±200 ms d'un passage à l'autre.
+
+Dans les deux cas : `npm run build`, puis **tuer tout `next start` existant avant d'en relancer un** (`Get-NetTCPConnection -LocalPort 3300` → `Stop-Process`). Un ancien serveur qui survit au rebuild sert un HTML pointant vers des chunks disparus (CSS en 500) et fausse tout en silence — c'est arrivé pendant cette session.
 
 ### Ce qui a été corrigé
 
@@ -48,31 +89,6 @@ A11y 96–100, Best Practices 100, SEO 100 partout. CLS = 0.
 6. **Logo** : `priority` uniquement dans l'en-tête ; pied de page et admin en lazy.
 7. **Images** : `minimumCacheTTL` 31 jours ; `Cache-Control` immutable sur `/images/`.
 8. **`text-wrap: pretty`** retiré (coût de layout, gain nul mesuré) ; `balance` conservé sur `h1, h2` seulement.
-
-### Diagnostic en cours (à reprendre)
-
-Trace Lighthouse (`--save-assets`) sur l'accueil :
-
-- Layout initial : **214 ms** à CPU ×4 pour 1 071 objets, puis 45 ms au swap de police. JS total ≈ 150 ms. Le site est léger côté CPU.
-- Pourtant **FCP observé = LCP observé = 2 747 ms** alors que `load` observé = 384 ms et DCL = 69 ms. **Quelque chose retarde la première peinture d'environ 2,3 s après le chargement des ressources**, en headless. C'est la piste n°1.
-
-Hypothèses à tester, dans l'ordre (rebuild ≈ 30 s, Lighthouse ≈ 25 s) :
-
-1. **`.grain`** : fond SVG `data:` avec `feTurbulence` + `mix-blend-mode: multiply` sur tout le hero. La rasterisation du filtre et le groupe de fusion peuvent retarder la première peinture. Test : commenter `.grain` dans `globals.css`, rebuild, Lighthouse.
-2. **`backdrop-blur-xl`** sur l'en-tête (quand scrollé), la barre d'appel mobile et les badges Avant/Après : à neutraliser pour tester.
-3. **Préchargement des polices** : vérifier dans le HTML généré que les deux `<link rel="preload" as="font">` sont bien présents et que `display: swap` ne bloque pas. Si le `<h1>` reste le facteur limitant, essayer `display: "optional"` sur Fraunces (fallback ajusté via `adjustFontFallback`, police servie dès la 2ᵉ page).
-4. Vérifier qu'il n'y a pas de différence entre headless et Chrome normal : lancer Lighthouse sans `--headless=new` (ou via DevTools) pour comparer le FCP observé.
-
-Commande de mesure utilisée :
-
-```powershell
-$env:CHROME_PATH = "C:\Program Files\Google\Chrome\Application\chrome.exe"
-npx lighthouse@12 http://localhost:3300/ --output=json --output-path=lh.json `
-  --chrome-flags="--headless=new --no-sandbox" --quiet --only-categories=performance
-# ajouter --save-assets pour la trace, --preset=desktop pour le desktop
-```
-
-Objectif réaliste : mobile ≥ 90 sur toutes les pages. Les leviers restants sont uniquement côté rendu initial (peinture), pas côté JS ni réseau.
 
 ## 4. Incident à connaître
 
