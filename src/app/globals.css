@@ -73,9 +73,10 @@
   h1, h2, h3, .font-display {
     font-family: var(--font-display);
     letter-spacing: -0.015em;
-    text-wrap: balance;
   }
-  p { text-wrap: pretty; }
+  /* `balance` seulement sur les grands titres (peu nombreux) ; `pretty` sur
+     tous les paragraphes a été retiré : coût de layout sans gain mesurable. */
+  h1, h2 { text-wrap: balance; }
   :focus-visible {
     outline: 2px solid var(--color-copper-500);
     outline-offset: 3px;

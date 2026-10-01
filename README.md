@@ -4,6 +4,11 @@ Site vitrine de **RND Élagage** (Bryan Renard, élagueur-paysagiste à Taverny,
 
 Stack : **Next.js 16** (App Router, Turbopack), React 19, TypeScript, **Tailwind CSS v4**, `sharp`, `zod`, Resend (e-mail).
 
+Documentation de travail :
+
+- `docs/ETAT-DU-PROJET.md` — état d'avancement, chantier performance en cours, points de reprise.
+- `docs/ACQUISITION.md` — plan SEO / local / GEO / Google Ads / tunnel de vente.
+
 ## Démarrage
 
 ```bash

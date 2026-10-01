@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { CreditCalculator } from "./CreditCalculator";
 import { Reveal } from "@/components/ui/Reveal";
@@ -12,7 +12,7 @@ export function CreditImpot({ exemple }: { exemple: number }) {
         <Reveal>
           <p className="eyebrow text-copper-400">Services à la personne</p>
           <div className="mt-6 flex items-end gap-4">
-            <span className="font-display text-[clamp(5rem,12vw,9rem)] leading-[0.85] text-cream-50" style={{ fontVariationSettings: '"opsz" 144' }}>
+            <span className="font-display text-[clamp(5rem,12vw,9rem)] leading-[0.85] text-cream-50">
               50
             </span>
             <span className="pb-2 font-display text-[clamp(2rem,4vw,3rem)] leading-none text-copper-400">%</span>

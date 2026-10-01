@@ -6,8 +6,10 @@ import "./globals.css";
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
-  // Seul l'axe optique est conservé : SOFT et WONK triplaient le poids du fichier.
-  axes: ["opsz"],
+  // Instance statique Regular (coupe display, opsz 144 par défaut) : tout le
+  // display du site est en graisse 400. La version variable (SOFT/WONK/opsz)
+  // pesait 121 Ko et retardait le LCP ; celle-ci en fait ~5 fois moins.
+  weight: "400",
   display: "swap",
   adjustFontFallback: true,
 });
