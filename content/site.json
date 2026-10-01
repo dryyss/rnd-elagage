@@ -1,0 +1,29 @@
+{
+  "nom": "RND Élagage",
+  "baseline": "Taille de haies et entretien extérieur",
+  "gerant": "Bryan Renard",
+  "telephone": "06 00 00 00 00",
+  "email": "contact@rnd-elagage.fr",
+  "adresse": {
+    "rue": "12 allée des Troènes",
+    "codePostal": "95150",
+    "ville": "Taverny"
+  },
+  "siret": "En cours d'immatriculation",
+  "horaires": "Lundi au samedi, 8h – 19h",
+  "delaiReponse": "Réponse sous 24 h",
+  "assuranceRcPro": "Assurance responsabilité civile professionnelle",
+  "servicesPersonne": {
+    "actif": true,
+    "mention": "Prestations d'entretien éligibles au crédit d'impôt de 50 % (services à la personne)."
+  },
+  "googleBusiness": {
+    "valDoise": "",
+    "nievre": ""
+  },
+  "reseaux": {
+    "instagram": "",
+    "facebook": ""
+  },
+  "urlSite": "https://www.rnd-elagage.fr"
+}

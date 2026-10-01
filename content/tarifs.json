@@ -1,0 +1,24 @@
+{
+  "avertissement": "Tarifs indicatifs, nets de taxe. Le devis définitif est établi gratuitement sur place après mesure.",
+  "minimumFacturation": 150,
+  "haies": {
+    "unite": "€ / mètre linéaire",
+    "lignes": [
+      { "libelle": "Jusqu'à 2 m de hauteur", "prix": 6, "creditImpot": true },
+      { "libelle": "De 2 à 4 m", "prix": 9, "creditImpot": true },
+      { "libelle": "Plus de 4 m", "prix": 14, "creditImpot": true }
+    ],
+    "evacuation": { "libelle": "Évacuation des déchets verts", "prix": 2, "unite": "€ / ml", "creditImpot": true }
+  },
+  "autres": [
+    { "libelle": "Tonte de pelouse", "prix": "0,80 € / m²", "creditImpot": true },
+    { "libelle": "Débroussaillage", "prix": "1,20 € / m²", "creditImpot": true },
+    { "libelle": "Désherbage manuel et nettoyage de massifs", "prix": "Sur devis", "creditImpot": true },
+    { "libelle": "Engazonnement semé", "prix": "12 € / m²", "creditImpot": false },
+    { "libelle": "Gazon en rouleau", "prix": "18 € / m²", "creditImpot": false },
+    { "libelle": "Abattage d'arbre accessible", "prix": "Sur devis", "creditImpot": false },
+    { "libelle": "Dessouchage / rognage de souche", "prix": "Sur devis", "creditImpot": false },
+    { "libelle": "Terrassement léger, bordures, muret", "prix": "Sur devis", "creditImpot": false }
+  ],
+  "exempleCredit": { "libelle": "Taille d'une haie de 40 ml, hauteur 2 à 4 m, évacuation comprise", "montant": 440 }
+}

@@ -1,26 +1,192 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* Palette RND Élagage — vert forêt du logo, crème papier, cuivre "renard" */
+  --color-forest-950: #06201a;
+  --color-forest-900: #0a2e24;
+  --color-forest-800: #0e3b2e;
+  --color-forest-700: #164c3b;
+  --color-forest-600: #1f5f4a;
+  --color-forest-500: #2f7a5f;
+  --color-moss-500: #4f7a5a;
+  --color-moss-400: #6f9a78;
+  --color-sage-300: #a8bba6;
+  --color-sage-200: #cfd9cc;
+  --color-sage-100: #e6ece3;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-cream-50: #fbf9f4;
+  --color-cream-100: #f6f2e9;
+  --color-cream-200: #ede6d6;
+  --color-cream-300: #e0d6c0;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  --color-copper-600: #a2521f;
+  --color-copper-500: #b9622e;
+  --color-copper-400: #d08a5a;
+  --color-copper-100: #f6e7da;
+
+  --color-ink-900: #15211b;
+  --color-ink-700: #2d3a33;
+  --color-ink-500: #58665e;
+  --color-ink-300: #8a958e;
+
+  --font-display: var(--font-fraunces), "Georgia", serif;
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px rgb(21 33 27 / 0.04), 0 8px 24px -8px rgb(21 33 27 / 0.12);
+  --shadow-lift: 0 2px 4px rgb(21 33 27 / 0.06), 0 24px 48px -16px rgb(21 33 27 / 0.22);
+
+  --radius-xl2: 1.25rem;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --animate-marquee: marquee 40s linear infinite;
+  --animate-fade-up: fade-up 0.8s var(--ease-out-expo) both;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  /* Pas d'opacité 0 au départ : un élément peint invisible n'est jamais
+     comptabilisé comme LCP par Chrome. On ne glisse que la position. */
+  @keyframes fade-up {
+    from { transform: translateY(14px); }
+    to { transform: translateY(0); }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--color-cream-100);
+    color: var(--color-ink-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--color-copper-400);
+    color: var(--color-forest-950);
+  }
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  p { text-wrap: pretty; }
+  :focus-visible {
+    outline: 2px solid var(--color-copper-500);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-[1240px] px-5 sm:px-8;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em];
+  }
+  .eyebrow::before {
+    content: "";
+    @apply block h-px w-6 bg-current opacity-70;
+  }
+  .btn-primary {
+    @apply btn bg-copper-500 text-cream-50 shadow-[0_8px_24px_-8px_rgb(185_98_46/0.6)] hover:bg-copper-600 hover:shadow-[0_12px_28px_-8px_rgb(185_98_46/0.7)];
+  }
+  .btn-forest {
+    @apply btn bg-forest-800 text-cream-50 hover:bg-forest-700;
+  }
+  .btn-ghost {
+    @apply btn border border-ink-900/15 bg-transparent text-ink-900 hover:border-ink-900/40 hover:bg-cream-50;
+  }
+  .btn-ghost-light {
+    @apply btn border border-cream-50/30 bg-transparent text-cream-50 hover:border-cream-50/70 hover:bg-cream-50/10;
+  }
+  .card {
+    @apply rounded-[1.25rem] border border-ink-900/8 bg-cream-50 shadow-soft;
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.08;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+  .reveal {
+    min-width: 0;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+  /* Sans JavaScript ou avec réduction des animations : tout est visible d'emblée. */
+  @media (scripting: none), (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+    .animate-fade-up {
+      animation: none;
+    }
+  }
+  .prose-rnd h2 { @apply mt-12 mb-4 text-3xl text-forest-900; }
+  .prose-rnd h3 { @apply mt-8 mb-3 text-xl text-forest-900; }
+  .prose-rnd p { @apply mb-4 text-[17px] leading-[1.7] text-ink-700; }
+  .prose-rnd ul { @apply mb-5 list-disc space-y-2 pl-6 text-[17px] leading-[1.7] text-ink-700; }
+  .prose-rnd strong { @apply font-semibold text-ink-900; }
+  .prose-rnd a { @apply text-copper-600 underline decoration-copper-400/60 underline-offset-4 hover:text-copper-500; }
+}
+
+@utility btn {
+  display: inline-flex;
+  min-height: calc(var(--spacing) * 12);
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--spacing) * 2);
+  border-radius: 9999px;
+  padding-inline: calc(var(--spacing) * 6);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  transition: all 300ms var(--ease-out-expo);
+  &:active { transform: scale(0.98); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+@utility text-balance { text-wrap: balance; }
+@utility mask-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+/* Halos décoratifs : dégradés radiaux au lieu de filter: blur(), beaucoup
+   moins coûteux à peindre (surtout sur mobile), rendu quasi identique. */
+@utility halo-sage {
+  background: radial-gradient(closest-side, --alpha(var(--color-sage-200) / 55%), transparent 75%);
+}
+@utility halo-copper {
+  background: radial-gradient(closest-side, var(--color-copper-100), transparent 75%);
+}
+@utility halo-copper-soft {
+  background: radial-gradient(closest-side, --alpha(var(--color-copper-500) / 22%), transparent 75%);
+}
+@utility halo-forest {
+  background: radial-gradient(closest-side, --alpha(var(--color-forest-700) / 45%), transparent 75%);
 }

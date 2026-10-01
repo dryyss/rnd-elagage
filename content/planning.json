@@ -1,0 +1,27 @@
+{
+  "zones": [
+    {
+      "id": "val-doise",
+      "nom": "Val-d'Oise",
+      "libelleCourt": "Val-d'Oise (95)",
+      "departements": ["95"],
+      "communeBase": "Taverny",
+      "description": "Taverny et la vallée de Montmorency, Herblay, Franconville, Saint-Leu-la-Forêt, Ermont et les communes voisines."
+    },
+    {
+      "id": "nievre",
+      "nom": "Nièvre",
+      "libelleCourt": "Nièvre (58)",
+      "departements": ["58"],
+      "communeBase": "Nevers",
+      "description": "Nevers et son agglomération : Varennes-Vauzelles, Fourchambault, Coulanges-lès-Nevers, Marzy."
+    }
+  ],
+  "tournees": [
+    { "zone": "val-doise", "debut": "2026-09-07", "fin": "2026-10-17" },
+    { "zone": "nievre", "debut": "2026-10-26", "fin": "2026-12-05" },
+    { "zone": "val-doise", "debut": "2026-12-07", "fin": "2027-01-22" },
+    { "zone": "nievre", "debut": "2027-01-25", "fin": "2027-03-06" }
+  ],
+  "messageHorsZone": "Nous n'intervenons pas encore dans ce secteur. Laissez-nous vos coordonnées : si une tournée passe à proximité, nous vous recontactons."
+}

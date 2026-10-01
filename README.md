@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RND Élagage — site vitrine
 
-## Getting Started
+Site vitrine de **RND Élagage** (Bryan Renard, élagueur-paysagiste à Taverny, 95), réalisé par Magar Développement dans le cadre du devis DEV-2026-003 / contrat CTR-2026-003.
 
-First, run the development server:
+Stack : **Next.js 16** (App Router, Turbopack), React 19, TypeScript, **Tailwind CSS v4**, `sharp`, `zod`, Resend (e-mail).
+
+## Démarrage
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # puis renseigner ADMIN_PASSWORD au minimum
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Production :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Variables d'environnement
 
-## Learn More
+| Variable | Rôle | Obligatoire |
+| --- | --- | --- |
+| `ADMIN_PASSWORD` | Mot de passe de l'espace `/admin`. Sans lui, l'admin est désactivé. | Oui (pour l'admin) |
+| `ADMIN_SECRET` | Secret de signature du cookie de session. Générer une chaîne longue et aléatoire. | Fortement conseillé |
+| `RESEND_API_KEY` | Clé [Resend](https://resend.com) pour l'envoi des demandes de devis. Sans clé, les demandes sont écrites dans la console serveur. | Pour la prod |
+| `DEVIS_TO_EMAIL` | Destinataire des demandes (défaut : e-mail de `content/site.json`). | Non |
+| `DEVIS_FROM_EMAIL` | Expéditeur, sur un domaine vérifié chez Resend. | Pour la prod |
+| `NEXT_PUBLIC_GTAG_ID` | ID Google Ads / GA4. Chargé uniquement après consentement cookies. | Non |
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+content/            Contenu éditable (JSON) : site, planning, tarifs, realisations, temoignages
+public/images/      Photos du client, converties en JPEG optimisé
+public/uploads/     Photos envoyées depuis l'admin (non versionnées)
+src/app/(site)/     Pages publiques
+src/app/(admin)/    Espace d'administration (protégé)
+src/app/(admin-login)/  Page de connexion admin
+src/app/api/        /api/devis (formulaire), /api/admin/upload (photos)
+src/components/     layout/, sections/, ui/, forms/, seo/
+src/data/           Prestations (6) et communes (12) : contenu éditorial riche, en TypeScript
+src/lib/            Contenu, planning, auth admin, schémas zod, SEO, utilitaires
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Pages
 
-## Deploy on Vercel
+- `/` accueil
+- `/prestations/[slug]` × 6 : taille-de-haies (principale), entretien-de-jardin-debroussaillage, abattage-dessouchage, engazonnement-creation, terrassement-maconnerie-paysagere, evacuation-dechets-verts
+- `/credit-impot`, `/tarifs`, `/realisations` (filtre `?prestation=`), `/a-propos`
+- `/zones` + `/zones/[slug]` × 12 pages locales (7 Val-d'Oise, 5 Nièvre)
+- `/contact` (préremplissage `?cp=&prestation=`)
+- `/mentions-legales`, `/politique-de-confidentialite`
+- `/sitemap.xml`, `/robots.txt`, `/opengraph-image`
+- `/admin` : tableau de bord, planning, réalisations, tarifs, avis, coordonnées
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Espace d'administration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Accès : `/admin/login` avec `ADMIN_PASSWORD`. Session signée (HMAC) en cookie `httpOnly`, 7 jours.
+
+Chaque écran charge un fichier de `content/`, le modifie côté client, puis l'enregistre via une Server Action qui :
+
+1. valide le JSON avec le schéma zod correspondant (`src/lib/content-schemas.ts`) ;
+2. écrit le fichier de façon atomique ;
+3. appelle `revalidatePath("/", "layout")` : le site public est à jour immédiatement.
+
+L'upload de photos (`/api/admin/upload`) redimensionne en 1600 px max et convertit en JPEG via `sharp`, dans `public/uploads/`.
+
+### Planning des tournées
+
+`content/planning.json` décrit les deux zones (départements couverts) et la liste des tournées `{ zone, debut, fin }`. Le site en déduit automatiquement la tournée en cours, la prochaine, et oriente les visiteurs selon le code postal saisi (`src/lib/planning.ts`). L'accueil et les pages zones sont revalidés toutes les heures pour que « en cours / prochaine » reste exact sans intervention.
+
+## Hébergement
+
+Le contenu est stocké **sur le disque** (`content/*.json`, `public/uploads/`). Il faut donc un hébergement avec **système de fichiers persistant** et runtime Node : VPS, Railway, Render, Fly.io, Docker, o2switch Node, etc.
+
+Sur une plateforme serverless (Vercel, Netlify), les écritures ne persistent pas : remplacer `readJson`/`writeJson` dans `src/lib/content.ts` par un stockage externe (Vercel KV, Blob, Supabase, base SQL) et l'upload par un bucket (S3, Blob). Le reste du code ne change pas.
+
+## Avant la mise en ligne — à compléter avec le client
+
+- **Téléphone** réel (actuellement `06 00 00 00 00`) → admin › Coordonnées.
+- **SIRET**, date d'immatriculation, numéro de déclaration **services à la personne** (SAP) → admin › Coordonnées + mentions légales.
+- **Hébergeur** et **médiateur de la consommation** → `src/app/(site)/mentions-legales/page.tsx`.
+- URLs des **fiches Google Business** (Val-d'Oise et Nièvre) → admin › Coordonnées. Tant qu'elles sont vides, la section Avis affiche un état d'attente honnête.
+- **Dates réelles des tournées** → admin › Planning. Les dates actuelles sont un exemple.
+- **Communes réelles des photos** : les communes attribuées aux 9 réalisations sont illustratives, à corriger dans admin › Réalisations.
+- **Tarifs** : la grille actuelle (6/9/14 €/ml, évacuation 2 €/ml, minimum 150 €) est une proposition à valider.
+- **Photos HD** : les photos reçues font ~750 × 350 px au mieux. Le design a été pensé pour ne pas dépendre de grandes photos plein écran, mais des photos de 1600 px et plus amélioreraient nettement les cartes et la galerie. Idéalement des avant/après pris du même point de vue.
+- Domaine : `content/site.json › urlSite` (utilisé pour le sitemap, les canoniques et les données structurées).
+
+## Scripts
+
+- `npm run dev` / `npm run build` / `npm start`
+- `npm run lint`
+
+Pour ajouter des photos en dehors de l'admin : les déposer dans `public/images/` en JPEG (1600 px de large max, qualité ~82), puis les référencer dans `content/realisations.json` ou `src/data/prestations.ts`.
