@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
 import { prestations } from "@/data/prestations";
@@ -111,7 +112,22 @@ export function Footer({ site }: { site: SiteConfig }) {
             <Link href="/politique-de-confidentialite" className="hover:text-cream-50">
               Confidentialité
             </Link>
-            <a href="https://magar-developpement.fr" rel="noopener" className="hover:text-cream-50">
+            <a
+              href="https://magar-developpement.fr"
+              rel="noopener"
+              className="group inline-flex items-center gap-2 hover:text-cream-50"
+            >
+              {/* Symbole seul (sans le texte du logo, illisible à cette taille) : ses couleurs
+                  ressortent sur le vert forêt, pas besoin de badge clair. */}
+              <Image
+                src="/magar-developpement-mark.svg"
+                alt=""
+                width={26}
+                height={18}
+                unoptimized
+                loading="lazy"
+                className="h-[18px] w-auto opacity-85 transition group-hover:opacity-100"
+              />
               Site par Magar Développement
             </a>
           </div>
